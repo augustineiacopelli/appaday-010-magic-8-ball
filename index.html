@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>007 · Magic 8 Ball</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cinzel+Decorative:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --black: #0a0a0a;
+    --deep: #111111;
+    --ink: #1a1a2e;
+    --blue: #16213e;
+    --glow-blue: #4a9eff;
+    --ice-blue: #a8d8ff;
+    --white: #f0f0f0;
+    --gold: #c9a84c;
+    --gold-light: #e8c87a;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--black);
+    color: var(--white);
+    font-family: 'Cinzel', serif;
+    overflow: hidden;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    position: relative;
+  }
+
+  /* Subtle radial atmosphere */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% 40%, #0d1b3e 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Header bar */
+  .header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background: rgba(10,10,10,0.85);
+    border-bottom: 1px solid rgba(201,168,76,0.2);
+    z-index: 100;
+    backdrop-filter: blur(8px);
+  }
+
+  .header-badge {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--gold);
+    opacity: 0.8;
+    text-transform: uppercase;
+  }
+
+  .header-home {
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: rgba(201,168,76,0.5);
+    text-decoration: none;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  .header-home:hover { color: var(--gold); }
+
+  /* Main layout */
+  .scene {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    padding-top: 20px;
+  }
+
+  .title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(13px, 2.5vw, 18px);
+    font-weight: 400;
+    letter-spacing: 0.35em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    opacity: 0.9;
+  }
+
+  /* The Ball */
+  .ball-wrap {
+    position: relative;
+    width: clamp(260px, 55vw, 360px);
+    height: clamp(260px, 55vw, 360px);
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .ball {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #2a2a2a 0%, #111 30%, #050505 65%, #000 100%);
+    box-shadow:
+      0 0 0 2px #1a1a1a,
+      0 10px 60px rgba(0,0,0,0.9),
+      0 30px 80px rgba(0,0,0,0.7),
+      inset 0 -20px 40px rgba(0,0,0,0.8),
+      inset 0 5px 20px rgba(255,255,255,0.04);
+    position: relative;
+    transition: transform 0.1s ease;
+    will-change: transform;
+  }
+
+  /* Sheen highlight */
+  .ball::before {
+    content: '';
+    position: absolute;
+    top: 8%;
+    left: 18%;
+    width: 38%;
+    height: 32%;
+    background: radial-gradient(ellipse, rgba(255,255,255,0.12) 0%, transparent 70%);
+    border-radius: 50%;
+    transform: rotate(-20deg);
+    pointer-events: none;
+  }
+
+  /* White circle with the 8 */
+  .ball-eight {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 36%;
+    height: 36%;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, #e8e8e8, #c0c0c0 40%, #999 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow:
+      0 2px 8px rgba(0,0,0,0.6),
+      inset 0 1px 3px rgba(255,255,255,0.3);
+  }
+
+  .ball-eight span {
+    font-family: 'Cinzel', serif;
+    font-weight: 900;
+    font-size: clamp(28px, 7vw, 50px);
+    color: #111;
+    line-height: 1;
+    margin-top: 2px;
+  }
+
+  /* The window - the answer portal */
+  .window {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 62%;
+    height: 62%;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+
+  .window.visible { opacity: 1; }
+
+  .window-inner {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 40%, #0d2a5e 0%, #071530 40%, #03090f 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16%;
+    position: relative;
+  }
+
+  /* Triangle */
+  .triangle {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 72%;
+    height: 72%;
+    clip-path: polygon(50% 8%, 97% 88%, 3% 88%);
+    background: linear-gradient(170deg, #1a3a7a 0%, #0d1f4a 60%, #060f2a 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 12%;
+  }
+
+  .answer-text {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(7px, 1.8vw, 12px);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-align: center;
+    color: var(--ice-blue);
+    text-shadow: 0 0 8px rgba(74, 158, 255, 0.8), 0 0 20px rgba(74, 158, 255, 0.4);
+    line-height: 1.3;
+    max-width: 90%;
+    transition: opacity 0.3s ease;
+  }
+
+  /* Shake animation */
+  @keyframes shake {
+    0%   { transform: translate(0, 0) rotate(0deg); }
+    10%  { transform: translate(-6px, -4px) rotate(-3deg); }
+    20%  { transform: translate(6px, 4px) rotate(3deg); }
+    30%  { transform: translate(-5px, 6px) rotate(-2deg); }
+    40%  { transform: translate(5px, -5px) rotate(2deg); }
+    50%  { transform: translate(-4px, 3px) rotate(-2deg); }
+    60%  { transform: translate(4px, -3px) rotate(1deg); }
+    70%  { transform: translate(-3px, 4px) rotate(-1deg); }
+    80%  { transform: translate(3px, -2px) rotate(1deg); }
+    90%  { transform: translate(-1px, 1px) rotate(0deg); }
+    100% { transform: translate(0, 0) rotate(0deg); }
+  }
+
+  .ball.shaking {
+    animation: shake 0.7s ease-out;
+  }
+
+  @keyframes fadeInAnswer {
+    from { opacity: 0; transform: scale(0.7); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  .answer-text.revealed {
+    animation: fadeInAnswer 0.5s ease-out forwards;
+  }
+
+  /* Glow pulse on the window when answer shows */
+  @keyframes glowPulse {
+    0%, 100% { box-shadow: 0 0 20px rgba(74, 158, 255, 0.3), inset 0 0 15px rgba(74, 158, 255, 0.1); }
+    50% { box-shadow: 0 0 40px rgba(74, 158, 255, 0.6), inset 0 0 25px rgba(74, 158, 255, 0.2); }
+  }
+
+  .window-inner.glowing {
+    animation: glowPulse 2s ease-in-out infinite;
+  }
+
+  /* Prompt text */
+  .prompt {
+    margin-top: 32px;
+    font-size: clamp(9px, 2vw, 12px);
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: rgba(201, 168, 76, 0.45);
+    text-align: center;
+    transition: opacity 0.4s;
+    height: 20px;
+  }
+
+  /* Question input area */
+  .question-area {
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: clamp(260px, 70vw, 400px);
+  }
+
+  .question-input {
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(201,168,76,0.25);
+    border-radius: 4px;
+    padding: 10px 14px;
+    font-family: 'Cinzel', serif;
+    font-size: clamp(10px, 2vw, 12px);
+    letter-spacing: 0.05em;
+    color: var(--white);
+    text-align: center;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .question-input::placeholder {
+    color: rgba(255,255,255,0.2);
+    letter-spacing: 0.08em;
+  }
+
+  .question-input:focus {
+    border-color: rgba(201,168,76,0.5);
+    background: rgba(255,255,255,0.06);
+  }
+
+  .ask-btn {
+    background: transparent;
+    border: 1px solid rgba(201,168,76,0.4);
+    color: var(--gold);
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 10px 28px;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+    border-radius: 2px;
+  }
+
+  .ask-btn:hover {
+    background: rgba(201,168,76,0.1);
+    border-color: var(--gold);
+  }
+
+  .ask-btn:active {
+    background: rgba(201,168,76,0.2);
+  }
+
+  /* History */
+  .history {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    padding: 10px 20px 14px;
+    background: rgba(10,10,10,0.8);
+    border-top: 1px solid rgba(201,168,76,0.1);
+    backdrop-filter: blur(8px);
+    z-index: 100;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+
+  .history-label {
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(201,168,76,0.35);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .history-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px;
+    border-radius: 2px;
+    font-size: 9px;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .chip-yes { background: rgba(74, 158, 255, 0.12); color: #7ec8ff; border: 1px solid rgba(74,158,255,0.2); }
+  .chip-no { background: rgba(255, 80, 80, 0.1); color: #ff9999; border: 1px solid rgba(255,80,80,0.2); }
+  .chip-maybe { background: rgba(201, 168, 76, 0.1); color: #d4b06a; border: 1px solid rgba(201,168,76,0.2); }
+
+  @media (max-width: 480px) {
+    .ball-wrap {
+      width: clamp(230px, 75vw, 310px);
+      height: clamp(230px, 75vw, 310px);
+    }
+    .question-area { width: 88vw; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <span class="header-badge">007 · Magic 8 Ball · G</span>
+  <a class="header-home" href="https://augustineiacopelli.github.io">← Portfolio</a>
+</header>
+
+<div class="scene">
+  <div class="title">Magic 8 Ball</div>
+
+  <div class="ball-wrap" id="ballWrap" onclick="askBall()" title="Shake the ball">
+    <div class="ball" id="ball">
+      <!-- Default state: show the 8 -->
+      <div class="ball-eight" id="eightCircle">
+        <span>8</span>
+      </div>
+      <!-- Answer state: show the window -->
+      <div class="window" id="window">
+        <div class="window-inner" id="windowInner">
+          <div class="triangle">
+            <div class="answer-text" id="answerText"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="prompt" id="prompt">Tap the ball to seek your answer</div>
+
+  <div class="question-area">
+    <input
+      class="question-input"
+      id="questionInput"
+      type="text"
+      maxlength="80"
+      placeholder="Ask your question..."
+      onkeydown="if(event.key==='Enter') askBall()"
+    >
+    <button class="ask-btn" onclick="askBall()">Consult the Oracle</button>
+  </div>
+</div>
+
+<div class="history" id="historyBar">
+  <span class="history-label">Recent</span>
+  <span style="font-size:9px;color:rgba(255,255,255,0.15);letter-spacing:0.05em;">—</span>
+</div>
+
+<script>
+const ANSWERS = [
+  // Yes (10)
+  { text: "It is certain", type: "yes" },
+  { text: "It is decidedly so", type: "yes" },
+  { text: "Without a doubt", type: "yes" },
+  { text: "Yes, definitely", type: "yes" },
+  { text: "You may rely on it", type: "yes" },
+  { text: "As I see it, yes", type: "yes" },
+  { text: "Most likely", type: "yes" },
+  { text: "Outlook good", type: "yes" },
+  { text: "Yes", type: "yes" },
+  { text: "Signs point to yes", type: "yes" },
+  // Maybe (5)
+  { text: "Reply hazy, try again", type: "maybe" },
+  { text: "Ask again later", type: "maybe" },
+  { text: "Better not tell you now", type: "maybe" },
+  { text: "Cannot predict now", type: "maybe" },
+  { text: "Concentrate and ask again", type: "maybe" },
+  // No (5)
+  { text: "Don't count on it", type: "no" },
+  { text: "My reply is no", type: "no" },
+  { text: "My sources say no", type: "no" },
+  { text: "Outlook not so good", type: "no" },
+  { text: "Very doubtful", type: "no" },
+];
+
+const history = [];
+let isShaking = false;
+
+function askBall() {
+  if (isShaking) return;
+  isShaking = true;
+
+  const ball = document.getElementById('ball');
+  const eightCircle = document.getElementById('eightCircle');
+  const windowEl = document.getElementById('window');
+  const windowInner = document.getElementById('windowInner');
+  const answerText = document.getElementById('answerText');
+  const prompt = document.getElementById('prompt');
+
+  // Hide previous answer
+  windowEl.classList.remove('visible');
+  windowInner.classList.remove('glowing');
+  eightCircle.style.opacity = '1';
+  answerText.classList.remove('revealed');
+  answerText.textContent = '';
+
+  prompt.textContent = '...';
+
+  // Shake
+  ball.classList.remove('shaking');
+  void ball.offsetWidth; // reflow
+  ball.classList.add('shaking');
+
+  setTimeout(() => {
+    const answer = ANSWERS[Math.floor(Math.random() * ANSWERS.length)];
+
+    // Hide the 8, show the window
+    eightCircle.style.opacity = '0';
+    eightCircle.style.transition = 'opacity 0.3s';
+
+    answerText.textContent = answer.text;
+    windowEl.classList.add('visible');
+    windowInner.classList.add('glowing');
+
+    setTimeout(() => {
+      answerText.classList.add('revealed');
+      prompt.textContent = 'Tap to ask again';
+      isShaking = false;
+    }, 100);
+
+    // Add to history
+    addHistory(answer);
+  }, 750);
+}
+
+function addHistory(answer) {
+  history.unshift(answer);
+  if (history.length > 5) history.pop();
+
+  const bar = document.getElementById('historyBar');
+  bar.innerHTML = '<span class="history-label">Recent</span>';
+
+  history.forEach(a => {
+    const chip = document.createElement('span');
+    chip.className = `history-chip chip-${a.type}`;
+    chip.textContent = a.text;
+    bar.appendChild(chip);
+  });
+}
+</script>
+</body>
+</html>
