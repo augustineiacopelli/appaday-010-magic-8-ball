@@ -30,3 +30,8 @@ A fully-featured Magic 8 Ball oracle. Type a yes/no question, tap the ball (or h
 - [x] Mobile friendly: works on 375px viewport, tap targets sized correctly
 - [x] Visually polished: 3D ball aesthetic with glow effects and history strip
 - [x] Published: live on GitHub Pages before midnight
+
+## Future Revisions Needed
+
+- Text Wrapping needs improvement
+- Add additional themes
