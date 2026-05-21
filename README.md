@@ -35,3 +35,4 @@ A fully-featured Magic 8 Ball oracle. Type a yes/no question, tap the ball (or h
 
 - Text Wrapping needs improvement
 - Add additional themes
+- Shouldn't zoom to text field
